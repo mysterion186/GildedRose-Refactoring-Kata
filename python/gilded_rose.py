@@ -54,6 +54,17 @@ class SulfurasUpdater(BaseUpdater):
         pass
 
 
+class ConjuredItemUpdater(BaseUpdater):
+    def update(self):
+        degradation = 2
+
+        self.item.sell_in -= 1
+
+        if self.item.sell_in < 0:
+            degradation *= 2
+        self.item.quality = max(0, self.item.quality - degradation)
+
+
 def get_updater(item):
     if item.name == "Aged Brie":
         return AgedBrieUpdater(item)
@@ -63,6 +74,9 @@ def get_updater(item):
 
     if item.name == "Backstage passes to a TAFKAL80ETC concert":
         return BackstagePassUpdater(item)
+
+    if item.name.startswith("Conjured "):
+        return ConjuredItemUpdater(item)
 
     return NormalItemUpdater(item)
 
