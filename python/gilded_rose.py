@@ -1,39 +1,80 @@
 # -*- coding: utf-8 -*-
+from abc import ABC, abstractmethod
+
+
+class BaseUpdater(ABC):
+    def __init__(self, item):
+        self.item = item
+
+    @abstractmethod
+    def update(self):
+        pass
+
+
+class NormalItemUpdater(BaseUpdater):
+    def update(self):
+        if self.item.quality > 0:
+            self.item.quality -= 1
+        self.item.sell_in -= 1
+
+        if self.item.sell_in < 0 and self.item.quality > 0:
+            self.item.quality -= 1
+
+
+class AgedBrieUpdater(BaseUpdater):
+    def update(self):
+        if self.item.quality < 50:
+            self.item.quality += 1
+
+        self.item.sell_in -= 1
+
+        if self.item.sell_in < 0 and self.item.quality < 50:
+            self.item.quality += 1
+
+
+class BackstagePassUpdater(BaseUpdater):
+    def update(self):
+        if self.item.quality < 50:
+            self.item.quality += 1
+
+            if self.item.sell_in < 11 and self.item.quality < 50:
+                self.item.quality += 1
+
+            if self.item.sell_in < 6 and self.item.quality < 50:
+                self.item.quality += 1
+
+        self.item.sell_in -= 1
+
+        if self.item.sell_in < 0:
+            self.item.quality = 0
+
+
+class SulfurasUpdater(BaseUpdater):
+    def update(self):
+        pass
+
+
+def get_updater(item):
+    if item.name == "Aged Brie":
+        return AgedBrieUpdater(item)
+
+    if item.name == "Sulfuras, Hand of Ragnaros":
+        return SulfurasUpdater(item)
+
+    if item.name == "Backstage passes to a TAFKAL80ETC concert":
+        return BackstagePassUpdater(item)
+
+    return NormalItemUpdater(item)
+
 
 class GildedRose(object):
-
     def __init__(self, items):
         self.items = items
 
     def update_quality(self):
         for item in self.items:
-            if item.name != "Aged Brie" and item.name != "Backstage passes to a TAFKAL80ETC concert":
-                if item.quality > 0:
-                    if item.name != "Sulfuras, Hand of Ragnaros":
-                        item.quality = item.quality - 1
-            else:
-                if item.quality < 50:
-                    item.quality = item.quality + 1
-                    if item.name == "Backstage passes to a TAFKAL80ETC concert":
-                        if item.sell_in < 11:
-                            if item.quality < 50:
-                                item.quality = item.quality + 1
-                        if item.sell_in < 6:
-                            if item.quality < 50:
-                                item.quality = item.quality + 1
-            if item.name != "Sulfuras, Hand of Ragnaros":
-                item.sell_in = item.sell_in - 1
-            if item.sell_in < 0:
-                if item.name != "Aged Brie":
-                    if item.name != "Backstage passes to a TAFKAL80ETC concert":
-                        if item.quality > 0:
-                            if item.name != "Sulfuras, Hand of Ragnaros":
-                                item.quality = item.quality - 1
-                    else:
-                        item.quality = item.quality - item.quality
-                else:
-                    if item.quality < 50:
-                        item.quality = item.quality + 1
+            updater = get_updater(item)
+            updater.update()
 
 
 class Item:
